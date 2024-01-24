@@ -20,7 +20,6 @@ public class Movement : MonoBehaviour
 
     bool IsNewVector;
 
-    private float time = 0.0f;
     public float interpolationPeriod = 5f;
     Vector3 R_vector;
     private void Start()
