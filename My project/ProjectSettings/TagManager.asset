@@ -6,11 +6,12 @@ TagManager:
   tags:
   - herbivore
   - carnivore
+  - triangle
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - icosphere
   - Water
   - UI
   - 
