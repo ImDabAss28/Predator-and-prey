@@ -7,6 +7,7 @@ TagManager:
   - herbivore
   - carnivore
   - triangle
+  - text
   layers:
   - Default
   - TransparentFX

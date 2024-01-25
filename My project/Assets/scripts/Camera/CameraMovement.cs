@@ -9,9 +9,9 @@ using UnityEngine;
 public class CameraMovement : MonoBehaviour
 {
     private float speed = 1000f;
-    void Update()
+    void FixedUpdate()
     {
-        if (Input.GetKey("b"))
+        if (Input.GetKeyDown("b"))
         {
             CamOrbit();
         }
