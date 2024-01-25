@@ -360,6 +360,7 @@
 "Assets/scripts/GlobalController.cs"
 "Assets/scripts/herb.cs"
 "Assets/scripts/Herb_random.cs"
+"Assets/scripts/Plant.cs"
 "Assets/scripts/triangulation/findNeighbors.cs"
 "Assets/scripts/triangulation/findTriangle.cs"
 "Assets/scripts/triangulation/triangle.cs"

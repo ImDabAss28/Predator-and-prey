@@ -119,6 +119,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21930cd95f3f0814c8e824ff34efea19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Carnivores: []
+  Herbivores: []
+  carn: 1000
+  herb: 1000
+  rand: 0
+  topdown: 0
 --- !u!114 &4994982401388446884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,5 +139,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   middle: {fileID: 8302642423803609406, guid: 72ee0a5045bffda44bfc802a8db2687a, type: 3}
   child: {fileID: 277433557757817079}
+  fa: 0
+  fb: 0
+  gender: 0
   interpolationPeriod: 3
   interpolationPeriodEaten: 0.01
+  tri: {fileID: 0}
+  triMask:
+    serializedVersion: 2
+    m_Bits: 0

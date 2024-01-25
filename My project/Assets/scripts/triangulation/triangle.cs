@@ -10,6 +10,7 @@ public class triangle : MonoBehaviour
     public List<GameObject> neighbors = new List<GameObject>();
     public List<GameObject> sheep = new List<GameObject>();
     public List<GameObject> wolves = new List<GameObject>();
+    public List<GameObject> plants = new List<GameObject>();
     public Vector3 pos;
     public Vector3[] vertices = new Vector3[3];
 

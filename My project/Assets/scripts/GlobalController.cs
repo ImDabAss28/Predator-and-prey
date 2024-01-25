@@ -10,8 +10,8 @@ public class GlobalController : MonoBehaviour
     public static int function = 0;
     GameObject[] Arr;
     
-    [SerializeField] int carn = 1;
-    [SerializeField] int herb = 1;
+    int carn = 20;
+    int herb = 20;
     [SerializeField] bool rand = false;
     [SerializeField] bool topdown = false;
     

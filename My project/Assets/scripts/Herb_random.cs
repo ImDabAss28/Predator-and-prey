@@ -70,6 +70,7 @@ public class Herb_random : MonoBehaviour
 
     private void Initialize()
     {
+		timeEaten = UnityEngine.Random.Range(15.0f, 25.0f);
 		speed = UnityEngine.Random.Range(0.10f, 0.15f);
         gender = (1 == UnityEngine.Random.Range(0,2));
         flocking = UnityEngine.Random.Range(fa, fb);
@@ -78,7 +79,11 @@ public class Herb_random : MonoBehaviour
 
     private void HandleMitosis()
     {
-        timeEaten += Time.deltaTime;
+        timeEaten -= Time.deltaTime;
+        if(timeEaten < 0.0f){
+			SR.sheep.Remove(this.gameObject);
+			Destroy(this.gameObject);
+		}
 
         if (pregnant > Time.deltaTime) pregnant -= Time.deltaTime;
         else if (pregnant != 0) {
@@ -135,6 +140,20 @@ public class Herb_random : MonoBehaviour
 		foreach (var herbivore in SR.sheep) {
 			if(gender && !herbivore.GetComponent<Herb_random>().gender && pregnant == 0.0){
 				pregnant = PregTime;
+			}
+		}
+		
+		if(SR.plants.Count > 0){
+			R_vector = 0.10f * R_vector + 0.90f * SR.plants[0].GetComponent<Plant>().transform.position;
+			timeEaten = UnityEngine.Random.Range(15.0f, 25.0f);
+		}
+		else{
+			foreach(var tri in SR.neighbors){
+				if(tri.GetComponent<triangle>().plants.Count > 0){
+					R_vector = 0.10f * R_vector + 0.90f * tri.GetComponent<triangle>().plants[0].GetComponent<Plant>().transform.position;
+					MidPoint = MidPoint * 0.4f + 0.6f * tri.GetComponent<triangle>().plants[0].GetComponent<Plant>().transform.position;
+					avgSpeed = avgSpeed * 0.7f + 0.3f * (tri.GetComponent<triangle>().plants[0].GetComponent<Plant>().transform.position - transform.position);
+				}
 			}
 		}
 
