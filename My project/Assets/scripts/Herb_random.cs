@@ -4,161 +4,179 @@ using UnityEngine;
 public class Herb_random : MonoBehaviour
 {
     GlobalController controller;
-
     [SerializeField] GameObject middle;
     [SerializeField] GameObject child;
+    [SerializeField] float fa;
+    [SerializeField] float fb;
 
     Quaternion mid_rot;
     Quaternion move_change;
 
+    float flocking = 0;
+    bool danger = false;
     float r = 10f;
     float speed = 0.15f;
+    int initCnt = 0;
+    
+    public bool gender = false; // 0 male 1 female
     float pregnant = 0.0f;
-    Vector3 mid;
-    Vector3 moveTo;
-    Vector3 oldPos;
-    Vector3 myvector;
+    float PregTime = 10.0f;
+    
+    Vector3 moveTo = Vector3.zero;
+    Vector3 avgSpeed = Vector3.zero;
+    Vector3 oldPos = Vector3.zero;
+    Vector3 MidPoint = Vector3.zero;
+    Vector3 Escape = Vector3.zero;
+    Vector3 Dest = Vector3.zero;
 
     public float interpolationPeriod = 3f;
     private float time;
     public float interpolationPeriodEaten = 0.01f;
     private float timeEaten = 0.0f;
-    private float hord;
     
     // Triangles
     public GameObject tri;
     private RaycastHit hit;
     [SerializeField] private LayerMask triMask;
-    triangle prevSR, SR;  
+    triangle prevSR, SR;
+    bool init = false;
 
     Vector3 R_vector;
 
     private void Start()
     {
-        Initialize();
+        controller = GetComponent<GlobalController>();
+		Initialize();
+        Escape = Vector3.zero;
     }
-
-    private void Awake()
-    {
-        Initialize();
-        pregnant = 0 - UnityEngine.Random.Range(0, 1);
-    }
-
-    //private void Update()
-    //{
-        //HandleInput();
-    //}
 
     private void FixedUpdate()
     {
-        HandleMovement();
-
-        HandleTimeAndMitosis();
-
-        HandleRandomVector();
-
-        HandleHerbivoreInteractions();
-
-        MoveToDestination();
-        
-        detTri();
+		if(GlobalController.startupdone){
+			detTri();
+			if(initCnt > 10){
+				if(SR != null) SR.sheep.Remove(this.gameObject);
+				Destroy(this.gameObject);
+			}
+			if(init){
+				initCnt = 0;
+				RandomFactor();
+				HandleHerbivoreInteractions();
+				MoveToDestination();
+				HandleMitosis();
+			}
+		}	
     }
 
     private void Initialize()
     {
-        controller = GetComponent<GlobalController>();
+		speed = UnityEngine.Random.Range(0.10f, 0.15f);
+        gender = (1 == UnityEngine.Random.Range(0,2));
+        flocking = UnityEngine.Random.Range(fa, fb);
         time = interpolationPeriod;
-        hord = UnityEngine.Random.Range(0.00f, 0.35f);
     }
 
-    //private void HandleInput()
-    //{
-        //if (Input.GetKeyDown("h"))
-        //{
-            //controller.mitosis(this.gameObject, transform.position);
-        //}
-    //}
-
-    private void HandleMovement()
-    {
-        mid = transform.position - middle.transform.position;
-    }
-
-    private void HandleTimeAndMitosis()
+    private void HandleMitosis()
     {
         timeEaten += Time.deltaTime;
 
-        if (pregnant > Time.deltaTime)
-        {
-            pregnant -= Time.deltaTime;
-        }
-        else if (pregnant > 0)
-        {
+        if (pregnant > Time.deltaTime) pregnant -= Time.deltaTime;
+        else if (pregnant != 0) {
             pregnant = 0;
+            init = false;
+            initCnt = 0;
             controller.mitosis(this.gameObject, transform.position);
         }
     }
 
-    private void HandleRandomVector()
+    private void RandomFactor()
     {
-        if (time >= interpolationPeriod)
+		if (Vector3.Distance(perpendicular((MidPoint - transform.position) * flocking + R_vector * (1 - flocking) + Escape, transform.position).normalized  + transform.position, transform.position) < 0.5)
         {
-            R_vector = 0.35f * R_vector + 0.65f * new Vector3(
-                UnityEngine.Random.Range(-10f, 10f),
-                UnityEngine.Random.Range(-10f, 10f),
-                UnityEngine.Random.Range(-10f, 10f)
+            time = interpolationPeriod;
+        }
+        
+		time += Time.deltaTime;
+        if (time >= interpolationPeriod )
+        {
+			UpdateFlockingVecs();
+			float oldRatio = UnityEngine.Random.Range(0.05f, 0.15f);
+            R_vector = oldRatio * R_vector + (1-oldRatio) * new Vector3(
+                UnityEngine.Random.Range(-1f, 1f),
+                UnityEngine.Random.Range(-1f, 1f),
+                UnityEngine.Random.Range(-1f, 1f)
             ).normalized * r;
             time = 0;
         }
     }
 
+	private void UpdateFlockingVecs(){
+        MidPoint = new Vector3(0, 0, 0);
+        int cnt = 0;
+        
+		foreach (var herbivore in SR.sheep) {
+			avgSpeed += herbivore.GetComponent<Herb_random>().moveTo;
+			MidPoint += herbivore.transform.position;
+			cnt++;
+		}
+		foreach (var tri in SR.neighbors){
+			foreach(var herbivore in tri.GetComponent<triangle>().sheep){
+				avgSpeed += herbivore.GetComponent<Herb_random>().moveTo;
+				MidPoint += herbivore.transform.position;
+				cnt++;
+			}
+		}
+        MidPoint /= cnt;
+        avgSpeed /= cnt;
+	}
+
     private void HandleHerbivoreInteractions()
     {
-        GameObject[] herbivores = GameObject.FindGameObjectsWithTag("herbivore");
-        myvector = new Vector3(0, 0, 0);
-        int cnt = 0;
+		foreach (var herbivore in SR.sheep) {
+			if(gender && !herbivore.GetComponent<Herb_random>().gender && pregnant == 0.0){
+				pregnant = PregTime;
+			}
+		}
 
-        foreach (var herbivore in herbivores)
-        {
-            if (1 > Vector3.Distance(herbivore.transform.position, transform.position) && pregnant == 0)
-            {
-                pregnant = 10.0f;
-            }
-
-            if (3 > Vector3.Distance(herbivore.transform.position, transform.position))
-            {
-                myvector += herbivore.transform.position;
-                cnt++;
-            }
-        }
-
-        if (cnt > 0)
-        {
-            myvector /= cnt;
-        }
-
-        GameObject[] carnivores = GameObject.FindGameObjectsWithTag("carnivore");
-        foreach (var carnivore in carnivores)
-        {
-            if (2 > Vector3.Distance(carnivore.transform.position, transform.position) && pregnant == 0)
-            {
-                myvector = (-carnivore.transform.position + transform.position) * 3 + transform.position;
-            }
-        }
+		
+		if(SR.wolves.Count == 0){
+			foreach(var tri in SR.neighbors){
+				foreach(var carnivore in tri.GetComponent<triangle>().wolves){
+					Escape = transform.position - carnivore.transform.position;
+					danger = true;
+				}
+			}
+			if(!danger) Escape = Escape * UnityEngine.Random.Range(0.3f, 0.8f);
+		}
+		else{
+			Escape = transform.position - SR.wolves[0].transform.position;
+			danger = true;
+		}
+		if(Escape.magnitude < 0.01) danger = false;
+        
     }
 
     private void MoveToDestination()
     {
         oldPos = transform.position;
-        if (Vector3.Distance(((R_vector - transform.position) * (1.0f - hord) + (myvector - transform.position) * hord + transform.position), transform.position) <= 0.1)
+        
+        
+        
+        if(danger){
+			Dest = Escape * 0.95f + R_vector * 0.05f;
+		}
+		else
         {
-            moveTo = new Vector3(0, 0, 0);
+			Dest = MidPoint * flocking * 0.2f + (avgSpeed + transform.position) * flocking * 0.8f + R_vector * Mathf.Abs(1 - flocking);
         }
-        else
-        {
-            moveTo = perpendicular(((R_vector - transform.position) * (1.0f - hord) + (myvector - transform.position) * hord), transform.position).normalized * speed;
-        }
-
+        Dest = Dest.normalized * r;
+        if(Vector3.Distance(Dest, transform.position) < 0.15){
+			moveTo = Vector3.zero;
+			time = interpolationPeriod;
+		}
+		
+        moveTo = perpendicular(Dest - transform.position, transform.position).normalized*speed;
+        if(danger) moveTo = moveTo * UnityEngine.Random.Range(1.0f, 1.15f);
         transform.position = (transform.position + moveTo).normalized * r;
         transform.LookAt(middle.transform.position);
     }
@@ -179,6 +197,8 @@ public class Herb_random : MonoBehaviour
 
     private void detTri()
 	{
+		if(!init) Initialize();
+		initCnt++;
 		Vector3 raycastDir = Vector3.zero - transform.position;
 		Physics.Raycast(transform.position, raycastDir, out hit, 10f, triMask);
 		//Debug.DrawRay(transform.position, raycastDir, Color.red, 10f);
@@ -192,6 +212,7 @@ public class Herb_random : MonoBehaviour
 				prevSR.sheep.Remove(this.gameObject);
 			}
 			SR.sheep.Add(this.gameObject);
+			init = true;
 		}
 	}
 }
